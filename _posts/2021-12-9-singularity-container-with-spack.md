@@ -22,11 +22,11 @@ With this post I want to describe two tools which try to solve these problems. T
 
 As well `spack` as `singularity` are available as packages in openSUSE Tumbleweed, Leap and via PackageHub for SLE. The packages can be installed with
 ```
-# zypper install singularity spack
+# sudo zypper install singularity spack
 ```
 After the installation you should add all the users which want to use `singularity` to the `singularity` group, e.g. with
 ```
-# usermod -a -G singularity <user_login>
+# sudo usermod -a -G singularity <user_login>
 ```
 
 # Create singularity definition
