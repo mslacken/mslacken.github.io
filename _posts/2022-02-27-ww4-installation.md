@@ -22,8 +22,13 @@ this will install ww4 with its depencies, which are
 * dhcpd server
 * nfs-kernel server
 * tfptp
-. Warewulf can work without any of these services but this requires addtinal configuration steps.
+. Warewulf can work without any of these services but this requires additional configuration steps.
 Now its necessary to set the right values for `/etc/warewulf/warewulf.conf`, which are in most cases the following:
 * IP address of the master node
 * dynamic range for the dhpd server
-At this step you may also wan't to configure the nfs shares, which are exported from the master node.
+At this step you may also want to configure the nfs shares, which are exported from the master node. The shares are configured in the section `nfs`. If you want to export `/srv/software/spack` to your compute nodes, you have to add
+```
+    - path: /srv/software/spack
+      export options: ro,sync,no_root_squash,no_subtree_check
+      mount: true
+```
