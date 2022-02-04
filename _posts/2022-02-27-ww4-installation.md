@@ -39,6 +39,7 @@ At this step you may also want to configure the nfs shares, which are exported f
       export options: ro,sync,no_root_squash,no_subtree_check
       mount: true
 ```
+Before starting all the necessary services, the configuration of the `dhcpd` service must be altered. For this add the name of the network interface to `DHCPD_INTERFACE` in the file `/etc/sysconfig/dhdpd`.
 After this steps, you can now let configure warewulf the rest of the system with command
 ```
 wwctl configure -a
