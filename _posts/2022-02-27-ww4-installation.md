@@ -77,7 +77,7 @@ You may want to omit the `--gateway` if the nodes should not be able to connect 
 
 You can now add a node with the command
 ```
-wwctl node add node01 --netname default --netdev lan0 -I 10.10.93.11
+wwctl node add node01 --netname default --netdev lan0 -I 10.10.93.11 --discoverable
 ```
 In the final step the overlays for the nodes have to build with the command
 ```
