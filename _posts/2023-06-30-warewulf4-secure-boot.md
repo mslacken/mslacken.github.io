@@ -53,7 +53,7 @@ with
 ```
 and restart the dhpc services with 
 ```
-# wwctl configure dhcpd
+# wwctl configure dhcp
 ```
 After this steps instead of the iPXE binaries, first the `shim` signed by Microsoft is loaded which then loads `grub.efi`. Still missing is a `grub.cfg` in the right place which is created with following command:
 ```
