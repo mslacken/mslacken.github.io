@@ -23,7 +23,8 @@ With enabled secure boot the distributions which warewulf can use will be locked
 
 ## Install 
 
-Follow the [quck start](https://warewulf.org/docs/development/quickstart/suse15.html) guide for a basic installation of warewulf. If not already done, download am actual openSUSE leap container with the command
+Follow the [quck start](https://warewulf.org/docs/development/quickstart/suse15.html) guide for a basic installation of warewulf 4 4.x.
+If not already done, download am actual openSUSE leap container with the command
 ```
 # wwctl container import docker://registry.opensuse.org/science/warewulf/leap-15.5/containers/kernel:latest leap15.5
 ```
@@ -88,6 +89,10 @@ echo "Rebooting in 1 minute..."
 sleep 60
 reboot
 fi
+```
+and after the modificatin rebuild the host overlay with
+```
+# wwctl overlay build -H
 ```
 Now the nodes can be rebooted with secure boot enabled.
 
