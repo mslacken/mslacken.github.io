@@ -88,13 +88,13 @@ which will add the BMC/User with password and the cluster wide root password and
 Now the nodes can be added with
 
 ```
-for i in {1..4}; do nodename=n$(printf %02i $i); nodedefine $nodename net.ipv4_address=172.16.16.${i}; done
+for i in {1..4}; do nodename=n$(printf %02i $i); nodedefine $nodename net.ipv4_address=172.16.16.$(($i + 10)); done
 ```
 
 Add the entries to `/etc/hosts` with
 
 ```
-noderun -n n01-n04 echo {node}  {net.ipv4_address} >> /etc/hosts
+noderun -n n01-n04 echo  {net.ipv4_address} {node} >> /etc/hosts
 ```
 
 ## Add OS
@@ -113,5 +113,16 @@ the imported image can be checked with
 osdeploy list
 
 ```
-
-
+Now the nodes must be identified via their mac address which are known or can be obtained via the command
+```
+nodediscover list
+```
+The MAC address can be assigned to the node with e.g.
+```
+nodediscover assign -n n01 -e 00:11:22:33:44:55
+```
+and the node deployment can be started with 
+```
+odedeploy -n n01 opensuse_leap-15.5-x86_64-hpc -p
+```
+where the `-p` argument prevents any power chages for `n01` via bmc.
