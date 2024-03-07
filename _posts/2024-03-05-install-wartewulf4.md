@@ -244,3 +244,50 @@ wwctl node set node01 --netname infininet --netdev UNDEF --mtu UNDEF --type UNDE
 which will remove the node specific settings of the network and set the
 profiles.
 
+
+# Switch to grub boot
+
+Per default warewulf boots the node via iPXE, which isn't signed by SUSE and
+can't be used for secure boot. In order to enable grub as boot method you will
+have add/change following value in `/etc/warewulf/warewulf.conf`
+```
+warewulf:
+  grubboot: true
+```
+After this change you will have to reconfigure `dhcpd` and `tftp` with commands
+```
+wwctl configure dhcp
+wwctl configure tftp
+```
+and rebuild the overlays with the command
+```
+wwctl overlay build
+```
+
+Also make sure that the `shim` and `grub` are installed in the container. For
+openSUSE/SUSE the package names are `shim` and `grub2-x86_64-efi`, as the `shim`
+package is needed for secure boot.
+
+## Cross distribution secure boot
+
+If secure boot is enabled on the compute nodes and you want to boot different
+distributions make sure that the compute nodes boot with the so called http boot
+method. The reason for this, that the initial `shim` for PXE boot, which is
+default boot method, is extracted from the host running the warewulfd server.
+This `shim` is also used for nodes which are in `discoverable` state and
+subsequently have no hardware address assigned yet.
+
+# Disk management
+
+It is possible to manage the disks of the compute nodes with warewulf. As
+warewulf itself doesn't manage the disks, but creates a configuration and
+service files for `ignition` to do this job.
+
+As `ignition` and its dependencies aren't installed in most of the containers you should install following packages in the container
+
+* `ignition`
+* `gptfdisk`
+
+
+
+
