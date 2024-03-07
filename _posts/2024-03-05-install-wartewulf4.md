@@ -200,7 +200,7 @@ additional software can be installed with `zypper`.
 The shell command has also the `--bind` option which allows to mount arbitrary
 directories from the host into the container during the shell session. 
 
-Please not that if a command exits with a status other than zero, then the image
+Please note that if a command exits with a status other than zero, then the image
 isn't rebuilt automatically. So its also advised to rebuild the container with
 ```
 wwctl conainer build leap15.5
@@ -210,4 +210,37 @@ after any change.
 
 # Network configuration
 
-Multiple network interfaces can be configure with warewulf. 
+Multiple network interfaces for the compute nodes can be configure with warewulf. 
+You can add another network interface with the command
+```
+wwctl node set node01 --netname infininet -I 172.16.17.101 --netdev ib0 --mtu 9000 --type infiniband
+```
+what will add the infiniband interface `ib0` to the node `node01`. You can now
+list the network interfaces of the node with the command
+```
+wwctl node list -n
+```
+
+As changes in the settings are not tracked to all the settings, the overlays of
+the nodes should be rebuilt after this change with the command
+```
+wwctl overlay build
+```
+After a reboot these changes will be present on the nodes, so the interface will
+be active on the node.
+
+A more elegant way to get same result is to create a profile to hold the values
+which are the same for all interfaces which are in this case the `mtu` and the
+`netdev`.
+A new profile is created with the command
+```
+wwctl profile add infiniband-nodes --netname infininet --netdev ib0 --mtu 9000 --type infiniband
+```
+after that add this profile to the node and remove the node specific settings
+which are now in profile from the node with the command
+```
+wwctl node set node01 --netname infininet --netdev UNDEF --mtu UNDEF --type UNDEF --profiles default,infiniband-nodes
+```
+which will remove the node specific settings of the network and set the
+profiles.
+
