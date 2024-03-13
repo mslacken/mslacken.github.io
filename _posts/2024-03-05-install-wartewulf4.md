@@ -283,10 +283,50 @@ It is possible to manage the disks of the compute nodes with warewulf. As
 warewulf itself doesn't manage the disks, but creates a configuration and
 service files for `ignition` to do this job.
 
+## Prepare container
+
 As `ignition` and its dependencies aren't installed in most of the containers you should install following packages in the container
 
 * `ignition`
 * `gptfdisk`
+
+## Add disk to configuration
+
+For storage devices all the necessary structures must be configured which are
+
+* physical storage device(s) to be used
+* partition(s) on the disks
+* filesystem(s) to be used
+
+### Disks
+
+As `diskname` the path to the device e.g. `/dev/sda` must be used. 
+The only valid configuration for disks is `diskwipe` which should be self explanatory.
+
+### Partitions
+
+The `partname` is the name to the partition and iginition uses this name as the path for the file systems, e.g. `/dev/disk/by-partlabel/$PARTNAME`.
+
+Additionally the size and number of the partition should be specified, although for the partition with the highest number the size can be omitted and this partition will be extended to the possible maximum.
+
+You should also set the boolean variable `--partcreate` so that the parition is created if it doesn't exist.
+
+### Filesystems
+
+Filesystem are defined by the partition on which they are part of, so the name should have the format `/dev/disk/by-partlabel/$PARTNAME`. As filesystem needs to have a path so that it can be mounted, but its not mandatory. 
+
+Ignition will fail, if there no filesystem type is defined.
+
+## Examples
+
+You can add a scratch partition with 
+```
+wwctl node set n01 \
+  --diskname /dev/vda --diskwipe \
+  --partname scratch --partcreate \
+  --fsname scratch --fsformat btrfs --fspath /scratch --fswipe
+```
+
 
 
 
