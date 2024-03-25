@@ -3,7 +3,7 @@ author: Christian Goll
 date: 2024-03-05 12:00:00+01:00
 layout: post
 license: CC-BY-SA-3.0
-title: 
+title: Installation guide for warewulf4
 tags:
 - warewulf
 - warewulf4
