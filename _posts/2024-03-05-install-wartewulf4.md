@@ -84,6 +84,15 @@ wwctl configure --all
 ```
 which will configure all Warewulf related services.
 
+To conveniently log into compute nodes, you should now log out of and back
+into the Warewulf host, as this way an ssh key will be created on the
+Warewulf host which allows password-less login to the compute nodes.
+Note, that this key is not pass-phrase protected. If you require to protect
+your private key by a pass phrase, it is probably a good idea to do so now:
+```
+ssh-keygen -p -f $HOME/.ssh/cluster
+```
+
 ## Adding nodes and profiles to Warewulf
 
 Warewulf uses the concept of profiles which hold the generalized settings
@@ -153,22 +162,12 @@ node into the discoverable state before powering it on. This is done with
 ```
 wwctl node set node01 --discoverable
 ```
-
-Now the node(s) can be powered on and will boot into assigned container.
-
-To convenient log into compute nodes, you should now log out of and back
-into the Warewulf host, as this way an ssh key will be created on the
-Warewulf host which allows password-less login to the compute nodes.
-Note, that this key is not pass-phrase protected. If you require to protect
-your private key by a pass phrase, it is probably a good idea to do so now:
-```
-ssh-keygen -p -f $HOME/.ssh/cluster
-```
 Also you should run
 ```
 wwctl configure hostlist
 ```
 to add the new nodes to the file `/etc/hosts`.
+Now the node(s) can be powered on and will boot into assigned container.
 
 # Additional configuration
 
