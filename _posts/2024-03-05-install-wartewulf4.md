@@ -5,48 +5,47 @@ layout: post
 license: CC-BY-SA-3.0
 title: Installation guide for warewulf4
 tags:
-- warewulf
-- warewulf4
+- Warewulf
+- Warewulf4
 ---
 # Warewulf
 ## Preface
 
 In High Performance Computing (HPC) computing tasks are usually distributed
 among many compute threads which are spread across multiples cores, sockets
-and machines. These threads are thightly coupled together. For this compute
+and machines. These threads are tightly coupled together. Therefore compute
 clusters consist of a number of largely identical machines that need to be
 managed to maintain a well defined and identical setup across all nodes.
-Once clusters scale up there are many scalability factors to overcome.
+Once clusters scale up, there are many scalability factors to overcome.
 Warewulf is there to address this 'administrative scaling'.
 
 Warewulf is an operating system agnostic installation and management system
 for HPC clusters.  
-It is quick and easy to learn aud use as many settings are pre-configured
+It is quick and easy to learn and use as many settings are pre-configured
 to sensible defaults. It still provides the flexibility allowing to finely
 tune the configuration to local needs.
 It is released under the BSD license. Its source code is available at
 https://github.com/warewulf/warewulf. This is where the development happens
 as well.
 
-## Installing warewulf4
+## Installing Warewulf
 
 Compute clusters consist of at least one management or head node which
 is usually multi-homed connecting both to an external network and to a cluster
 private network as well as multiple compute nodes which reside solely on the
 private network. Other private networks dedicated to high speed task like RDMA
 and storage access may exist as well.
-Warewulf gets installed to one of the management nodes to manage and oversee
+Warewulf gets installed on one of the management nodes to manage and oversee
 the installation and management of the compute nodes.
-To install Warewulf on a cluster is running SUSE Linux Enterprise HPC 15 SP5,
-openSUSE Leap 15.5 or openSUSE Tumbleweed, simpy run:
+To install Warewulf on a cluster which is running openSUSE Leap 15.5 or
+openSUSE Tumbleweed, simpy run:
 ```
 zypper install warewul4
 ```
-on this management node to install the SUSE-provided Warewulf package.
 This package seamlessly integrates into a SUSE system and should therefore
 be preferred over packages provided on Github.
 
-During the installation the actual network configuration is written to the
+During the installation the actual network configuration is written to
 `/etc/warewulf/warewulf.conf`. These settings should be verified, as for
 multi homed hosts a sensible pre-configuration is not always possible.
 
@@ -56,12 +55,12 @@ ipaddr: 172.16.16.250
 netmask: 255.255.255.0
 network: 172.16.16.0
 ```
-where `ipaddr` should be the ip address of this host management host.
+where `ipaddr` should be the IP address of this management host.
 Also check the values of `netmask` and `network` - these should match
 this network.
 
-Additionally, you should configure the ip addresse range for dynamic/unknown
-hosts:
+Additionally, you may want to configure the IP addresse range for
+dynamic/unknown hosts:
 ```
 dhcp:
   range start: 172.16.26.21
@@ -70,7 +69,7 @@ dhcp:
 
 If the ISC dhcpd server is used (default on SUSE) make sure the value of
 `DHCPD_INTERFACE` in the file `/etc/sysconfig/dhcpd`  has been set to the
-right value.
+correct value.
 
 You are now ready to start the `warewulfd` service itself which delivers the
 images to the nodes:
@@ -79,13 +78,13 @@ systemctl enable --now warewulfd.service
 ```
 
 Now `wwctl` can be used to configure the the remaining services needed by
-warewulf. Run
+Warewulf. Run
 ```
 wwctl configure --all
 ```
-which will configure all warewulf related services.
+which will configure all Warewulf related services.
 
-## Adding nodes and profiles to warewulf
+## Adding nodes and profiles to Warewulf
 
 Warewulf uses the concept of profiles which hold the generalized settings
 of the individual nodes. It comes with a predefined profile `default`, to
@@ -99,7 +98,7 @@ Now, a node can be added with the command assigning it an IP address:
 ```
 wwctl node add node01 -I 172.16.16.101
 ```
-the mac address is known for this node, you can specify this as well:
+the MAC address is known for this node, you can specify this as well:
 ```
 wwctl node add node01 -I 172.16.16.101 -H cc:aa:ff:ff:ee
 ```
@@ -110,13 +109,13 @@ e.g.
 wwctl node add node[01-10] -I 172.16.16.101
 ```
 this will add the nodes with ip addresses starting at the specified address
-and incremented by warewulf.
+and incremented by Warewulf.
 
 ## Importing a container
 
 Warewulf uses a special [^footnote1] container as the base system to build OS
 images for the compute nodes. This is self contained and independent of the
-operating system installed on the warewulf host.
+operating system installed on the Warewulf host.
 
 To import an openSUSE Leap 15.5 container use the command
 ```
@@ -131,7 +130,7 @@ science project at
 
 https://registry.opensuse.org/cgi-bin/cooverview?srch_term=project%3D%5Escience%3A
 
-or from the upstream warewulf community repository
+or from the upstream Warewulf community repository
 
 https://github.com/orgs/warewulf/packages?repo_name=warewulf-node-images
 
@@ -149,19 +148,19 @@ as well as all the configuration overlays with the command
 wwctl overlay build
 ```
 just in case the build of the image may have failed earlier due to an error.
-If you didn't assign a hardware address to a node before you should set the node
-into the discoverable state before powering it on. This is done with
+If you didn't assign a hardware address to a node before you should set the
+node into the discoverable state before powering it on. This is done with
 ```
 wwctl node set node01 --discoverable
 ```
 
 Now the node(s) can be powered on and will boot into assigned container.
 
-For a convenient experience you should now log out of and back into the warewulf
-host, as this way an ssh key for password-less login to the compute nodes will
-be created on the warewulf host.
-Note, that this key is not pass-phrase protected. If you require a pass phrase,
-it is probably a good idea to set one now:
+To convenient log into compute nodes, you should now log out of and back
+into the Warewulf host, as this way an ssh key will be created on the
+Warewulf host which allows password-less login to the compute nodes.
+Note, that this key is not pass-phrase protected. If you require to protect
+your private key by a pass phrase, it is probably a good idea to do so now:
 ```
 ssh-keygen -p -f $HOME/.ssh/cluster
 ```
@@ -183,12 +182,12 @@ while the runtime overlay is updated on the nodes on a regular base
 (1 minute per default) via the `wwclient` service.
 
 In the default configuration the overlay called `wwinit` is used as system
-overlay. You can list the files in this overlays with the command:
+overlay. You may list the files in this overlays with the command:
 ```
 wwctl overlay list wwinit -a
 ```
 which will show a list of all the files in the overlays. Files ending with the
-suffix `.ww` are interpreted as template by warewulf and the suffix is removed
+suffix `.ww` are interpreted as template by Warewulf and the suffix is removed
 in the rendered overlay.
 The content of the overlay can be shown using the command
 ```
@@ -221,14 +220,15 @@ shell in the image with the command
 ```
 wwctl container shell leap15.5
 ```
-After you have opend a shell in the image additional software can be installed
-with `zypper`.
+After you have opend a shell you may install additional software using
+`zypper`.
 
 The shell command provides the option `--bind` which allows to mount arbitrary
 host directories into the container during the shell session.
 
 Please note that if a command exits with a status other than zero the image
-won't be rebuilt automatically. So its also advised to rebuild the container with
+won't be rebuilt automatically. Therefore it is advised to rebuild the
+container with
 ```
 wwctl conainer build leap15.5
 ```
@@ -238,7 +238,8 @@ after any change.
 # Network configuration
 
 Warewulf allows to configure multiple network interfaces for the compute nodes.
-You can add another network interface for example for infiniband using the command
+You can add another network interface for example for infiniband using the
+command
 ```
 wwctl node set node01 --netname infininet -I 172.16.17.101 --netdev ib0 --mtu 9000 --type infiniband
 ```
@@ -252,7 +253,7 @@ node overlays should be rebuilt after this change running the command:
 ```
 wwctl overlay build
 ```
-After a reboot these changes will be present on the nodes, in the avove case
+After a reboot these changes will be present on the nodes, in the above case
 the Infiniband interface will be active on the node.
 
 A more elegant way to get same result is to create a profile to hold the values
@@ -276,7 +277,7 @@ wwctl profile list -A infiniband-nodes
 
 ## Switch to grub boot
 
-Per default warewulf boots nodes via iPXE, which isn't signed by SUSE and
+Per default Warewulf boots nodes via iPXE, which isn't signed by SUSE and
 can't be used when secure boot is enabled. In order to switch to grub as boot
 method you will have add/change following value in `/etc/warewulf/warewulf.conf`
 ```
@@ -311,8 +312,8 @@ state and subsequently have no hardware address assigned yet.
 
 # Disk management
 
-It is possible to manage the disks of the compute nodes with warewulf. Here,
-warewulf itself doesn't manage the disks, but creates a configuration and
+It is possible to manage the disks of the compute nodes with Warewulf. Here,
+Warewulf itself doesn't manage the disks, but creates a configuration and
 service files for `ignition` to do this job.
 
 ## Prepare container
@@ -356,7 +357,7 @@ Filesystems are defined by the partition which contains them, so the
 name should have the format `/dev/disk/by-partlabel/$PARTNAME`. A filesystem
 needs to have a path if it is to be mounted, but its not mandatory.
 
-Ignition will fail, if there no filesystem type is defined.
+Ignition will fail, if there is no filesystem type defined.
 
 ## Examples
 
