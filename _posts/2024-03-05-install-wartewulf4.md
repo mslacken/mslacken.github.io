@@ -11,28 +11,28 @@ tags:
 # Warewulf
 ## Preface
 
-In High Performance Computing (HPC) computing tasks are usually distributed
+In High Performance Computing (HPC), computing tasks are usually distributed
 among many compute threads which are spread across multiples cores, sockets
-and machines. These threads are tightly coupled together. Therefore compute
+and machines. These threads are tightly coupled together. Therefore, compute
 clusters consist of a number of largely identical machines that need to be
-managed to maintain a well defined and identical setup across all nodes.
+managed to maintain a well-defined and identical setup across all nodes.
 Once clusters scale up, there are many scalability factors to overcome.
 Warewulf is there to address this 'administrative scaling'.
 
-Warewulf is an operating system agnostic installation and management system
+Warewulf is an operating system-agnostic installation and management system
 for HPC clusters.  
 It is quick and easy to learn and use as many settings are pre-configured
-to sensible defaults. It still provides the flexibility allowing to finely
-tune the configuration to local needs.
+to sensible defaults. It still provides the flexibility allowing fine
+tuning the configuration to local needs.
 It is released under the BSD license. Its source code is available at
 https://github.com/warewulf/warewulf. This is where the development happens
 as well.
 
 ## Installing Warewulf
 
-Compute clusters consist of at least one management or head node which
-is usually multi-homed connecting both to an external network and to a cluster
-private network as well as multiple compute nodes which reside solely on the
+Compute clusters consist of at least one management (or head node) which
+is usually multi-homed connected both to an external network and a cluster
+private network, as well as multiple compute nodes which reside solely on the
 private network. Other private networks dedicated to high speed task like RDMA
 and storage access may exist as well.
 Warewulf gets installed on one of the management nodes to manage and oversee
@@ -40,12 +40,12 @@ the installation and management of the compute nodes.
 To install Warewulf on a cluster which is running openSUSE Leap 15.5 or
 openSUSE Tumbleweed, simpy run:
 ```
-zypper install warewul4
+zypper install warewulf
 ```
 This package seamlessly integrates into a SUSE system and should therefore
 be preferred over packages provided on Github.
 
-During the installation the actual network configuration is written to
+During the installation, the actual network configuration is written to
 `/etc/warewulf/warewulf.conf`. These settings should be verified, as for
 multi homed hosts a sensible pre-configuration is not always possible.
 
@@ -67,7 +67,7 @@ dhcp:
   range end: 172.16.26.50
 ```
 
-If the ISC dhcpd server is used (default on SUSE) make sure the value of
+If the ISC dhcpd server is used (default on SUSE), make sure the value of
 `DHCPD_INTERFACE` in the file `/etc/sysconfig/dhcpd`  has been set to the
 correct value.
 
@@ -85,9 +85,9 @@ wwctl configure --all
 which will configure all Warewulf related services.
 
 To conveniently log into compute nodes, you should now log out of and back
-into the Warewulf host, as this way an ssh key will be created on the
+into the Warewulf host, as this will create an ssh key on the
 Warewulf host which allows password-less login to the compute nodes.
-Note, that this key is not pass-phrase protected. If you require to protect
+Note that this key is not pass-phrase protected. If you require protectingt
 your private key by a pass phrase, it is probably a good idea to do so now:
 ```
 ssh-keygen -p -f $HOME/.ssh/cluster
@@ -112,12 +112,12 @@ the MAC address is known for this node, you can specify this as well:
 wwctl node add node01 -I 172.16.16.101 -H cc:aa:ff:ff:ee
 ```
 
-For adding several nodes at once you may also use a node range which results
+For adding several nodes at once you may also use a node range,
 e.g.
 ```
 wwctl node add node[01-10] -I 172.16.16.101
 ```
-this will add the nodes with ip addresses starting at the specified address
+This will add the nodes with ip addresses starting at the specified address
 and incremented by Warewulf.
 
 ## Importing a container
@@ -135,11 +135,11 @@ This will import the specified container for the default profile.
 ### Alternative container sources
 
 Alternative containers are available from the openSUSE registry under the
-science project at
+science project at:
 
 https://registry.opensuse.org/cgi-bin/cooverview?srch_term=project%3D%5Escience%3A
 
-or from the upstream Warewulf community repository
+or from the upstream Warewulf community repository:
 
 https://github.com/orgs/warewulf/packages?repo_name=warewulf-node-images
 
@@ -148,21 +148,21 @@ It is also possible to import an image from a `chroot` by using the path to
 
 # Booting nodes
 
-As a final preparation you should rebuild the container image by running
+As a final preparation you should rebuild the container image by running:
 ```
 wwctl container build leap15.5
 ```
-as well as all the configuration overlays with the command
+as well as all the configuration overlays with the command:
 ```
 wwctl overlay build
 ```
 just in case the build of the image may have failed earlier due to an error.
-If you didn't assign a hardware address to a node before you should set the
-node into the discoverable state before powering it on. This is done with
+If you didn't assign a hardware address to a node before, you should set the
+node into the discoverable state before powering it on. This is done with:
 ```
 wwctl node set node01 --discoverable
 ```
-Also you should run
+Also you should run:
 ```
 wwctl configure hostlist
 ```
@@ -173,9 +173,10 @@ Now the node(s) can be powered on and will boot into assigned container.
 
 The configuration files for the nodes are managed as Golang text templates.
 The resulting files are overlayed over the node images. There are two ways
-of transport for the overlays to the compute node, the
+of transport for the overlays to the compute node:
 * system overlay
 * runtime overlay
+
 where the system overlay is baked into the boot image of the compute node
 while the runtime overlay is updated on the nodes on a regular base
 (1 minute per default) via the `wwclient` service.
@@ -186,9 +187,9 @@ overlay. You may list the files in this overlays with the command:
 wwctl overlay list wwinit -a
 ```
 which will show a list of all the files in the overlays. Files ending with the
-suffix `.ww` are interpreted as template by Warewulf and the suffix is removed
+suffix `.ww` are interpreted as template by Warewulf, and the suffix is removed
 in the rendered overlay.
-The content of the overlay can be shown using the command
+The content of the overlay can be shown using the command:
 ```
 wwctl overlay show wwinit /etc/issue.ww
 ```
@@ -196,13 +197,13 @@ To render the template  using the values for node01 use:
 ```
 wwctl overlay show wwinit /etc/issue.ww -r node01
 ```
-The overlay template itself may be edited using the command
+The overlay template itself may be edited using the command:
 ```
 wwctl overlay edit wwinit /etc/issue.ww
 ```
 
-Please note that after editing templates the overlays aren't updated
-automatically and should be rebuild with the command
+Please note that after editing templates, the overlays aren't updated
+automatically and should be rebuild with the command:
 ```
 wwctl overlay build
 ```
@@ -215,19 +216,19 @@ wwctl overlay show debug /warewulf/template-variables.md.ww
 # Modifying the container
 
 The node container is a self contained operating system image. You can open a
-shell in the image with the command
+shell in the image with the command:
 ```
 wwctl container shell leap15.5
 ```
-After you have opend a shell you may install additional software using
+After you have opened a shell, you may install additional software using
 `zypper`.
 
-The shell command provides the option `--bind` which allows to mount arbitrary
+The shell command provides the option `--bind` which allows mounting arbitrary
 host directories into the container during the shell session.
 
-Please note that if a command exits with a status other than zero the image
+Please note that if a command exits with a status other than zero, the image
 won't be rebuilt automatically. Therefore it is advised to rebuild the
-container with
+container with:
 ```
 wwctl conainer build leap15.5
 ```
@@ -236,9 +237,9 @@ after any change.
 
 # Network configuration
 
-Warewulf allows to configure multiple network interfaces for the compute nodes.
+Warewulf allows configuring multiple network interfaces for the compute nodes.
 You can add another network interface for example for infiniband using the
-command
+command:
 ```
 wwctl node set node01 --netname infininet -I 172.16.17.101 --netdev ib0 --mtu 9000 --type infiniband
 ```
@@ -252,13 +253,12 @@ node overlays should be rebuilt after this change running the command:
 ```
 wwctl overlay build
 ```
-After a reboot these changes will be present on the nodes, in the above case
+After a reboot, these changes will be present on the nodes; in the above case
 the Infiniband interface will be active on the node.
 
-A more elegant way to get same result is to create a profile to hold the values
-which are the same for all interfaces. In this case these are `mtu` and the
-`netdev`.
-A new profile for an Infiniband network is created using the command
+A more elegant way to get the same result is to create a profile to hold the values
+which are the same for all interfaces. In this case, these are `mtu` and `netdev`.
+A new profile for an Infiniband network is created using the command:
 ```
 wwctl profile add infiniband-nodes --netname infininet --netdev ib0 --mtu 9000 --type infiniband
 ```
@@ -276,19 +276,19 @@ wwctl profile list -A infiniband-nodes
 
 ## Switch to grub boot
 
-Per default Warewulf boots nodes via iPXE, which isn't signed by SUSE and
-can't be used when secure boot is enabled. In order to switch to grub as boot
-method you will have add/change following value in `/etc/warewulf/warewulf.conf`
+By default, Warewulf boots nodes via iPXE, which isn't signed by SUSE and
+can't be used when secure boot is enabled. In order to switch to grub as the boot
+method you must add or change following value in `/etc/warewulf/warewulf.conf`
 ```
 warewulf:
   grubboot: true
 ```
-After this change you will have to reconfigure `dhcpd` and `tftp` executing
+After this change, you will have to reconfigure `dhcpd` and `tftp` executing:
 ```
 wwctl configure dhcp
 wwctl configure tftp
 ```
-and rebuild the overlays with the command
+and rebuild the overlays with the command:
 ```
 wwctl overlay build
 ```
@@ -298,9 +298,9 @@ required by secure boot.
 
 ## Cross product secure boot
 
-If secure boot is enabled on the compute nodes and you want to boot different
-products make sure that the compute nodes boot with the so called 'http' boot
-method: For secure boot the signed `shim` needs to match the signature of the
+If secure boot is enabled on the compute nodes, and you want to boot different
+products, make sure that the compute nodes boot with the so-called 'http' boot
+method. For secure boot the signed `shim` needs to match the signature of the
 other pieces of the boot chain - including the kernel. The 'http' method is
 handled by `warewulfd` which will look up the image to boot and pick the shim
 from the image to deploy to this node. Otherwise, the initial `shim` for PXE
@@ -317,8 +317,8 @@ service files for `ignition` to do this job.
 
 ## Prepare container
 
-As `ignition` and its dependencies aren't installed in most of the containers
-you should install the packages `ignition` and `gptfdisk` in the container
+As `ignition` and its dependencies aren't installed in most of the containers,
+you should install the packages `ignition` and `gptfdisk` in the container.
 
 ```
 wwctl container exec <container_name> zypper -n in -y ignition gptdisk
@@ -326,7 +326,7 @@ wwctl container exec <container_name> zypper -n in -y ignition gptdisk
 
 ## Add disk to configuration
 
-For storage devices all the necessary structures must be configured which are
+For storage devices, all the necessary structures must be configured:
 
 * physical storage device(s) to be used
 * partition(s) on the disks
@@ -334,16 +334,16 @@ For storage devices all the necessary structures must be configured which are
 
 ### Disks
 
-The path to the device e.g. `/dev/sda` must be used As `diskname`.
-The only valid configuration for disks is `diskwipe` which should be
-self explanatory.
+The path to the device e.g. `/dev/sda` must be used for `diskname`.
+The only valid configuration for disks is `diskwipe`, which should be
+self-explanatory.
 
 ### Partitions
 
-The `partname` is the name to the partition whick iginition uses as the path
+The `partname` is the name to the partition which iginition uses as the path
 for the device files, e.g. `/dev/disk/by-partlabel/$PARTNAME`.
 
-Additionally the size and number of the partition need be specified for all
+Additionally, the size and number of the partition need be specified for all
 but the last partition (the one with the highest number) in which case this
 partition will be extended to the maximal size possible.
 
@@ -356,7 +356,7 @@ Filesystems are defined by the partition which contains them, so the
 name should have the format `/dev/disk/by-partlabel/$PARTNAME`. A filesystem
 needs to have a path if it is to be mounted, but its not mandatory.
 
-Ignition will fail, if there is no filesystem type defined.
+Ignition will fail if there is no filesystem type defined.
 
 ## Examples
 
@@ -369,7 +369,7 @@ wwctl node set node01 \
 ```
 This will be the only (and last) partition, therefore it does not
 require a size.
-To add another partition as swap partition, you many run:
+To add another partition as a swap partition, you may run:
 ```
 wwctl node set n01 \
   --diskname /dev/vda \
@@ -380,5 +380,5 @@ This adds the partition number 1 which will be placed before
 the `scratch` partition.
 
 
-[^footnote1]: This container is special only in that it is bootable, ie it
+[^footnote1]: This container is special only in that it is bootable, i.e. it
     contains a kernel and an init-implementation (systemd).
