@@ -22,23 +22,26 @@ Warewulf is there to address this 'administrative scaling'.
 Warewulf is an operating system-agnostic installation and management system
 for HPC clusters.  
 It is quick and easy to learn and use as many settings are pre-configured
-to sensible defaults. It still provides the flexibility allowing fine
+to sensible defaults. Also, it still provides the flexibility allowing fine
 tuning the configuration to local needs.
-It is released under the BSD license. Its source code is available at
+It is released under the BSD license, its source code is available at
 https://github.com/warewulf/warewulf. This is where the development happens
 as well.
 
+This article gives an overview on how to set up Warewulf on
+openSUSE Leap 15.5 or openSUSE Tumbleweed.
+
 ## Installing Warewulf
 
-Compute clusters consist of at least one management (or head node) which
+Compute clusters consist of at least one management (or head) node which
 is usually multi-homed connected both to an external network and a cluster
 private network, as well as multiple compute nodes which reside solely on the
-private network. Other private networks dedicated to high speed task like RDMA
+private network. Other private networks dedicated to high speed tasks like RDMA
 and storage access may exist as well.
-Warewulf gets installed on one of the management nodes to manage and oversee
-the installation and management of the compute nodes.
+Warewulf gets installed on one of the management nodes of a cluster to manage
+and oversee the installation and management of the compute nodes.
 To install Warewulf on a cluster which is running openSUSE Leap 15.5 or
-openSUSE Tumbleweed, simpy run:
+openSUSE Tumbleweed, simply run:
 ```
 zypper install warewulf
 ```
@@ -67,9 +70,9 @@ dhcp:
   range end: 172.16.26.50
 ```
 
-If the ISC dhcpd server is used (default on SUSE), make sure the value of
-`DHCPD_INTERFACE` in the file `/etc/sysconfig/dhcpd`  has been set to the
-correct value.
+If the ISC DHCP server (`dhcpd`) is used (default on SUSE), make sure the
+value of `DHCPD_INTERFACE` in the file `/etc/sysconfig/dhcpd`  has been
+set to the correct value.
 
 You are now ready to start the `warewulfd` service itself which delivers the
 images to the nodes:
@@ -78,7 +81,7 @@ systemctl enable --now warewulfd.service
 ```
 
 Now `wwctl` can be used to configure the the remaining services needed by
-Warewulf. Run
+Warewulf. Run:
 ```
 wwctl configure --all
 ```
@@ -87,8 +90,9 @@ which will configure all Warewulf related services.
 To conveniently log into compute nodes, you should now log out of and back
 into the Warewulf host, as this will create an ssh key on the
 Warewulf host which allows password-less login to the compute nodes.
-Note that this key is not pass-phrase protected. If you require protectingt
-your private key by a pass phrase, it is probably a good idea to do so now:
+Note however, that this key is not yet pass-phrase protected. If you
+require protecting your private key by a pass phrase, it is probably
+a good idea to do so now:
 ```
 ssh-keygen -p -f $HOME/.ssh/cluster
 ```
@@ -107,7 +111,7 @@ Now, a node can be added with the command assigning it an IP address:
 ```
 wwctl node add node01 -I 172.16.16.101
 ```
-the MAC address is known for this node, you can specify this as well:
+if the MAC address is known for this node, you can specify this as well:
 ```
 wwctl node add node01 -I 172.16.16.101 -H cc:aa:ff:ff:ee
 ```
@@ -122,8 +126,8 @@ and incremented by Warewulf.
 
 ## Importing a container
 
-Warewulf uses a special [^footnote1] container as the base system to build OS
-images for the compute nodes. This is self contained and independent of the
+Warewulf uses a special [^footnote1] container as base to build OS images
+for the compute nodes. This is self contained and independent of the
 operating system installed on the Warewulf host.
 
 To import an openSUSE Leap 15.5 container use the command
@@ -137,18 +141,19 @@ This will import the specified container for the default profile.
 Alternative containers are available from the openSUSE registry under the
 science project at:
 
-https://registry.opensuse.org/cgi-bin/cooverview?srch_term=project%3D%5Escience%3A
+[https://registry.opensuse.org/cgi-bin/cooverview?srch_term=project%3D%5Escience%3A](https://registry.opensuse.org/cgi-bin/cooverview?srch_term=project%3D%5Escience%3A)
 
 or from the upstream Warewulf community repository:
 
-https://github.com/orgs/warewulf/packages?repo_name=warewulf-node-images
+[https://github.com/orgs/warewulf/packages?repo_name=warewulf-node-images](https://github.com/orgs/warewulf/packages?repo_name=warewulf-node-images)
 
-It is also possible to import an image from a `chroot` by using the path to
-`chroot` as argument for `wwctl import`.
+It is also possible to import an image from a local installation into a
+directory (`chroot` directories) by using the path to this directory as
+argument for `wwctl import`.
 
 # Booting nodes
 
-As a final preparation you should rebuild the container image by running:
+As a final preparation you should rebuild the container image, now, by running:
 ```
 wwctl container build leap15.5
 ```
@@ -167,19 +172,19 @@ Also you should run:
 wwctl configure hostlist
 ```
 to add the new nodes to the file `/etc/hosts`.
-Now the node(s) can be powered on and will boot into assigned container.
+Now you should make sure that the node(s) will boot over PXE from the network
+interface connected to the specified network and power on the node(s) to
+boot into assigned image.
 
 # Additional configuration
 
 The configuration files for the nodes are managed as Golang text templates.
-The resulting files are overlayed over the node images. There are two ways
-of transport for the overlays to the compute node:
-* system overlay
-* runtime overlay
-
-where the system overlay is baked into the boot image of the compute node
-while the runtime overlay is updated on the nodes on a regular base
-(1 minute per default) via the `wwclient` service.
+The resulting files are overlayed over the node images. There are two types
+of overlays depending on how they are added to the compute node:
+* the **system overlay** which is 'baked' into the image during boot as part of
+  the `wwinit` process.
+* the **runtime overlay** which is updated on the nodes on a regular base
+  (1 minute per default) via the `wwclient` service.
 
 In the default configuration the overlay called `wwinit` is used as system
 overlay. You may list the files in this overlays with the command:
@@ -187,9 +192,9 @@ overlay. You may list the files in this overlays with the command:
 wwctl overlay list wwinit -a
 ```
 which will show a list of all the files in the overlays. Files ending with the
-suffix `.ww` are interpreted as template by Warewulf, and the suffix is removed
-in the rendered overlay.
-The content of the overlay can be shown using the command:
+suffix `.ww` are interpreted as template by Warewulf, the suffix is removed
+in the rendered file.
+To inspect the content of an overlay file use the command:
 ```
 wwctl overlay show wwinit /etc/issue.ww
 ```
@@ -201,9 +206,8 @@ The overlay template itself may be edited using the command:
 ```
 wwctl overlay edit wwinit /etc/issue.ww
 ```
-
 Please note that after editing templates, the overlays aren't updated
-automatically and should be rebuild with the command:
+automatically and you should trigger a rebuild with the command:
 ```
 wwctl overlay build
 ```
@@ -226,8 +230,8 @@ After you have opened a shell, you may install additional software using
 The shell command provides the option `--bind` which allows mounting arbitrary
 host directories into the container during the shell session.
 
-Please note that if a command exits with a status other than zero, the image
-won't be rebuilt automatically. Therefore it is advised to rebuild the
+Please note that if a command exits with a non-zero status, the image
+won't be rebuilt automatically. Therefore, it is advised to rebuild the
 container with:
 ```
 wwctl conainer build leap15.5
@@ -238,7 +242,7 @@ after any change.
 # Network configuration
 
 Warewulf allows configuring multiple network interfaces for the compute nodes.
-You can add another network interface for example for infiniband using the
+Therefore, you can add another network interface for example for infiniband using the
 command:
 ```
 wwctl node set node01 --netname infininet -I 172.16.17.101 --netdev ib0 --mtu 9000 --type infiniband
@@ -249,25 +253,26 @@ list the network interfaces of the node:
 wwctl node list -n
 ```
 As changes in the settings are not propagated to all configuration files, the
-node overlays should be rebuilt after this change running the command:
+node overlays should be rebuilt after this change by running the command:
 ```
 wwctl overlay build
 ```
 After a reboot, these changes will be present on the nodes; in the above case
 the Infiniband interface will be active on the node.
 
-A more elegant way to get the same result is to create a profile to hold the values
-which are the same for all interfaces. In this case, these are `mtu` and `netdev`.
-A new profile for an Infiniband network is created using the command:
+A more elegant way to get the same result is to create a profile to hold those
+values which are identical for all interfaces. In this case, these are `mtu`
+and `netdev`.
+Create a new profile for an Infiniband network using the command:
 ```
 wwctl profile add infiniband-nodes --netname infininet --netdev ib0 --mtu 9000 --type infiniband
 ```
-Once this has been created, you may add this profile to a node and remove the
-node specific settings which are now part of the common profile by executing:
+You may now add this profile to a node and remove the node specific settings
+which are now part of the common profile by executing:
 ```
 wwctl node set node01 --netname infininet --netdev UNDEF --mtu UNDEF --type UNDEF --profiles default,infiniband-nodes
 ```
-You may list the data in a profile using this command:
+To list the data in a profile use the command:
 ```
 wwctl profile list -A infiniband-nodes
 ```
@@ -277,8 +282,9 @@ wwctl profile list -A infiniband-nodes
 ## Switch to grub boot
 
 By default, Warewulf boots nodes via iPXE, which isn't signed by SUSE and
-can't be used when secure boot is enabled. In order to switch to grub as the boot
-method you must add or change following value in `/etc/warewulf/warewulf.conf`
+can't be used when secure boot is enabled. In order to switch to grub as
+the boot method you must add or change the following value in
+`/etc/warewulf/warewulf.conf`
 ```
 warewulf:
   grubboot: true
@@ -292,22 +298,27 @@ and rebuild the overlays with the command:
 ```
 wwctl overlay build
 ```
-Also make sure that the packages `shim` and `grub2-x86_64-efi` for x86-64
-or `grub2-arm64-efi` for arm are installed in the container. `shim` is
+Also make sure that the packages `shim` and `grub2-x86_64-efi` (for x86-64)
+or `grub2-arm64-efi` (for aarch64) are installed in the container. `shim` is
 required by secure boot.
 
 ## Cross product secure boot
 
-If secure boot is enabled on the compute nodes, and you want to boot different
-products, make sure that the compute nodes boot with the so-called 'http' boot
-method. For secure boot the signed `shim` needs to match the signature of the
-other pieces of the boot chain - including the kernel. The 'http' method is
-handled by `warewulfd` which will look up the image to boot and pick the shim
-from the image to deploy to this node. Otherwise, the initial `shim` for PXE
-boot, which is the default boot method, is extracted from the host running the
-warewulfd server. Make sure, the node container contains the `shim` package.
-The host system `shim` will also be used for nodes which are in `discoverable`
-state and subsequently have no hardware address assigned yet.
+With secure boot is enabled on the compute nodes, if you need to boot different
+products, you need to make sure that the compute nodes boot with the so-called
+'http' boot method: For secure boot the signed `shim` needs to match the
+signature of the other pieces of the boot chain - including the kernel.
+However, different products will have different sets of signatures in
+their boot chain.
+The 'http' boot method is handled by `warewulfd`. This will look up the image
+to boot and pick the right shim from the image to deploy to a particular node.
+Therefore, you need to make sure, that the node container contains the `shim`
+package.
+The default boot method will extract the initial `shim` for PXE boot from the
+host running the warewulfd server.
+Note, however, that the host system `shim` will also be used for nodes which
+are in the `discoverable` state and subsequently have no hardware address
+assigned, yet.
 
 # Disk management
 
@@ -326,17 +337,29 @@ wwctl container exec <container_name> zypper -n in -y ignition gptdisk
 
 ## Add disk to configuration
 
-For storage devices, all the necessary structures must be configured:
+Warewulf boots ephemeral systems, thus there is no need for local disk
+storage. Still, local disk storage may me useful to have, for instance
+as scratch storage for computational tasks.
+Warewulf is capable of setting up local disk storage. For this, it is
+necessary to configure the involved entities:
 
 * physical storage device(s) to be used
 * partition(s) on the disks
 * filesystem(s) to be used
 
+Warewulf doesn’t manage these entities itself, but creates a configuration
+and service files for `ignition` to perform this task.
+Therefore, you need to make sure to install `ignition` and `gptfdisk` on
+the compute node. Open a shell in the container and run:
+```
+zypper -n in -y zypper install ignition gptfdisk
+```
+
 ### Disks
 
 The path to the device e.g. `/dev/sda` must be used for `diskname`.
-The only valid configuration for disks is `diskwipe`, which should be
-self-explanatory.
+The only valid configuration option for disks is `diskwipe`, which
+should be self-explanatory.
 
 ### Partitions
 
