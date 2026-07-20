@@ -46,7 +46,52 @@ Creating the test bed is a bit more complicated and needs some refining. At firs
 A note able side quest here was to get the systemd-mcp server into the VM, without compliling it the whole would consume some CPU cycles and using the rpm package won't work as I didn't push the toon changes upstream, yet. The canconical way to copy now a binary to a VM would be use simply copy the file VM with `scp`. I didn't want to use this method as the ssh server was disabled and fixing this, I wanted to have as task to the LLM. This leaves following possibilities (or some more):
 * use 9p or similar FS
 * use a readonly FS containing only the binary
-As the 9p solution would require abolute paths in the cloud init config, I just created a second virtual disk which just contains the binary. After the start of the VM I could just `dd` to dump the binary into the FS. gg
+As the 9p solution would require abolute paths in the cloud init config, I just created a second virtual disk which just contains the binary. After the start of the VM I could just `dd` to dump the binary into the FS.
+The setup script additionally stopped the `ssh` server so that this "fail" could be used as test bed.
+
+## Agent 
+
+Now we need the connection between the MCP server and the LLM which was running on a remote ollama instance. For this I chose the google agent development kit https://adk.dev which wrapped all this tasks.
+Althouhg ADK has the possibity for external logging, it can also log the events to a local sqllite database what is important as we can read out from this database the relevant measurements the variables which where, the number of tokens presented to the LLM, the number of tokens createt by the LLM, number of tool calls and total number of ollama calls.
+
+## LLM
+
+The external ollama instance ran a `gemma4` model with `31.3B` paramters and `Q4_K_M` quantization, a temperture of 1 and the context length was `131072` tokens.
+
+
+## Experiments
+
+Following three queries were presented to the LLM
+* 'Check if sshd is running' **CHECK**
+* 'List me running services on the system and which services can be started' **LIST**
+* 'I can't login, fix this!' **FIX*
+
+The first two quest should be easy to solve for the LLM and just result in some token calls, as the last one should require a lot more tool calls and so test if toon works in real world scenarios with complex tool calls.
+For every query I made 30 runs with and without toon
+
+As you ## Results
+
+The results can be summarized in following table
+
+| Query | Mean tokens | Median tokens | Mean created tokens| Mean tool calls
+| ------------- | -------------- | -------------- | -------------- |
+
+| **CHECK** | 10621 | 11793 | 258 |1.70 |
+|**CHECK_TOON**| 10337 | 11755| 239 | 1.63 |
+| ------------- | -------------- | -------------- | -------------- |
+
+| **LIST**|10827 | 12333 | 1747 |2.07 |
+| **LIST_TOON** | 11846 | 12364 |1751 | 2.10 |
+| ------------- | -------------- | -------------- | -------------- |
+
+| **FIX** | 36738 | 26735 | 871 |6.63 |
+| **FIX_TOON** | 32466 | 26816 |766 | 5.97 |
+
+As you can see the using toon reduces as well the tokens presented to the LLM as well as the number of tokens created by the LLM. It's a bit suprising that if toon is used always less tokens are created, but it seems to be a trend that the number of created tokens depend on the number of presented tokens.
+For the simple example where the system was just tasked to check if ssh is running using toon doesn't make any big difference, asd most of the tokens are used up by the system prompt and the description of the tools available.
+For the listing of the services, what is basically a huge list, using toon perfromed worse as for that query slightly more tool calls were done if toon was used. Hence the number of crteated tokens was increased.
+For the most complex task which requires the LLM identify the stopped ssh service and start it, the more compact results from the tools make the biggest effect, not just in tne numbers presented to the LLM, but also in a more efficient tool usage. 
+Not using pure json doesn't hinder the LLM, but the efficient use of the context window seems here superior.
 
 
 
