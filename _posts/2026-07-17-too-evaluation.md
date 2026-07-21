@@ -1,9 +1,9 @@
 ---
 author: Christian Goll
-date: 2026-07-17 12:00:00+01:00
+date: 2026-07-21 12:00:00+01:00
 layout: post
 license: CC-BY-SA-3.0
-title: How to Create an MCP Server
+title: Evaluating TOON in a Real-World Scenario
 categories:
 - programming
 - mcp
@@ -13,11 +13,10 @@ tags:
 - toon
 ---
 
-# Evaluating toon in real world scenario
+# Evaluating TOON in a Real-World Scenario
 
-Token oriented notation abbreviated as toon is the idea to rewrite json in such way that less characters and thus less tokens are generated. The concept is more deeply explained at https://toonformat.dev/ and a simple example for this is following. When asking the systemd-mcp server for all inactive services on a system you will get without toon, following output:
-```
-
+Token-Oriented Notation (abbreviated as TOON) is the concept of rewriting JSON in such a way that fewer characters, and thus fewer tokens, are generated. The concept is explained in more detail at https://toonformat.dev/, and a simple example is shown below. When querying the systemd-mcp server for all inactive services on a system, the output without TOON is as follows:
+```json
 {
   "users": [
     { "id": 1, "name": "Alice", "role": "admin" },
@@ -26,86 +25,108 @@ Token oriented notation abbreviated as toon is the idea to rewrite json in such 
 }
 ```
 
-With 119 charcates reduces to 53 characters as in toon it would be 
-```
+This representation, which uses 119 characters, is reduced to 53 characters when using TOON:
+```text
 users[2]{id,name,role}:
   1,Alice,admin
   2,Bob,user
 ```
-see also the systemd example at the end of this text.
-As token savings are an easy way to bring AI costs down , increases response times and allows a better use of the context window this seems to be an easy win. Still changing the fundamental response from the MCP server seems may also have down sides. So I decided to make some real world experiments and see if there are any down sides of this, were the most severe would incorrect responses from the LLM or more tool calls nullifying the token savings.
+See also the systemd example at the end of this post.
 
-## MCP server and the implementation
+Because token savings are a direct way to reduce AI inference costs, improve response times (by decreasing latency), and allow better utilization of the context window, this approach seems like an easy win. Still, changing the fundamental response format of the MCP server may also have downsides. Therefore, I decided to perform some real-world experiments to determine if there are any downsides, the most severe of which would be incorrect responses from the LLM or an increased number of tool calls that nullify the token savings.
 
-As I was working on the systemd-mcp server https://github.com/openSUSE/systemd-mcp I decided to use this project as base.
-The standard GO implementation of MPC at https://github.com/modelcontextprotocol/go-sdk doesn't offer toon yet, I used https://github.com/aj-geddes/toon-context-mcp . The implementation is relatively straight forward as the real payload of a MCP is text field which contains the as json marshalled internal structure. So this text field must now marshalled using toon. The outer json structure which is used for communication between the MCP server and the client is left intact.
+## MCP Server and Implementation
 
-## Test bed
+As I was working on the systemd-mcp server (https://github.com/openSUSE/systemd-mcp), I decided to use this project as a base.
 
-Creating the test bed is a bit more complicated and needs some refining. At first the MCP server needs a real, life running systemd process to connect to. So a reproducible and secure solution for this is to use virtual machine. The tofu (OSS terraform) definition which can be found at https://github.com/mslacken/EvalToon/blob/main/tofu/leap-cloud.tf which uses an openSUSE Tumbleweed cloud image as it can be configured via cloud-init.
-A note able side quest here was to get the systemd-mcp server into the VM, without compiling it the whole would consume some CPU cycles and using the rpm package won't work as I didn't push the toon changes upstream, yet. The canonical way to copy now a binary to a VM would be use simply copy the file VM with `scp`. I didn't want to use this method as the ssh server was disabled and fixing this, I wanted to have as task to the LLM. This leaves following possibilities (or some more):
-* use 9p or similar FS
-* use a readonly FS containing only the binary
-As the 9p solution would require abolute paths in the cloud init config, I just created a second virtual disk which just contains the binary. After the start of the VM I could just `dd` to dump the binary into the FS.
-The setup script additionally stopped the `ssh` server so that this "fail" could be used as test bed.
+Since the standard Go implementation of MCP (https://github.com/modelcontextprotocol/go-sdk) does not support TOON yet, I used `toon-context-mcp` (https://github.com/aj-geddes/toon-context-mcp). The integration is relatively straightforward: the primary payload of an MCP tool response is a text field containing the internal structure marshaled as JSON. Thus, this text field is now marshaled using TOON, while the outer JSON structure used for communication between the MCP server and client remains intact.
 
-## Agent 
+## Testbed
 
-Now we need the connection between the MCP server and the LLM which was running on a remote ollama instance. For this I chose the google agent development kit https://adk.dev which wrapped all this tasks.
-Althouhg ADK has the possibly for external logging, it can also log the events to a local sqlite database what is important as we can read out from this database the relevant measurements the variables which where, the number of tokens presented to the LLM, the number of tokens created by the LLM, number of tool calls and total number of ollama calls.
+Creating the testbed was slightly more involved and required some refinement. First, the MCP server requires a real, live-running `systemd` process to connect to. A reproducible and secure solution is to run it inside a virtual machine (VM). The OpenTofu (open-source Terraform) configuration, available at https://github.com/mslacken/EvalToon/blob/main/tofu/leap-cloud.tf, provisions an openSUSE Tumbleweed cloud image that is configured via `cloud-init`.
+
+A notable side quest was deploying the `systemd-mcp` binary to the VM. Compiling it on the VM itself would consume excessive CPU cycles and time, and using the RPM package was not viable because the TOON changes had not been pushed upstream yet. The canonical way to copy a binary to a VM would simply be to copy the file using `scp`. However, I chose not to use this approach because the SSH server was disabled, and I wanted to assign fixing the SSH service as a task for the LLM itself. This left several possibilities (among others):
+* Using a 9p or similar shared filesystem
+* Using a read-only filesystem containing only the binary
+
+Since the 9p solution requires absolute paths in the `cloud-init` configuration, I chose to create a second virtual disk containing the pre-compiled binary. Upon booting the VM, the setup script uses `dd` to dump the binary into the root filesystem.
+
+The setup script also stopped the SSH service, creating the broken configuration that serves as our "FIX" task testbed.
+
+## Agent
+
+To connect the MCP server to the LLM, which was hosted on a remote Ollama instance, I used the Google Agent Development Kit (ADK) (https://adk.dev) to manage the agent execution loops.
+
+Although ADK supports external logging, it can also log events to a local SQLite database. This database is critical for our analysis, allowing us to extract the relevant metrics: the number of prompt (input) tokens presented to the LLM, candidate (output) tokens generated by the LLM, the number of tool calls, and the total number of Ollama API calls.
 
 ## LLM
 
-The external ollama instance ran a `gemma4` model with `31.3B` parameters and `Q4_K_M` quantization, a temperature of 1 and the context length was `131072` tokens.
-
+The external Ollama instance ran a `gemma4` model with `31.3B` parameters and `Q4_K_M` quantization, with a temperature of 1.0 and a context window of 131,072 tokens.
 
 ## Experiments
 
-Following three queries were presented to the LLM
-* 'Check if sshd is running' labeled as **CHECK**
-* 'List me running services on the system and which services can be started' labeled as **LIST**
-* 'I can't login, fix this!' labeled as **FIX**
+The following three queries were presented to the LLM:
+* "Check if sshd is running" (labeled as **CHECK**)
+* "List me running services on the system and which services can be started" (labeled as **LIST**)
+* "I can't login, fix this!" (labeled as **FIX**)
 
-The first two quest should be easy to solve for the LLM and just result in some token calls, as the last one should require a lot more tool calls and so test if toon works in real world scenarios with complex tool calls.
-For every query I made 30 runs with and without toon
+The first two tasks are relatively simple, primarily establishing baseline performance and token usage. In contrast, the final query (**FIX**) requires a multi-step troubleshooting approach with several tool calls, testing how TOON performs in a complex, real-world agentic scenario.
+
+For each query, I conducted 30 independent runs with and without TOON enabled.
 
 ## Results
 
-The results can be summarized in following table
+The results are summarized in the table below:
 
-| Query | Mean tokens | Median tokens | Mean created tokens| Mean tool calls
-| ------------- | -------------- | -------------- | -------------- |
+| Query | Mean Prompt Tokens | Median Prompt Tokens | Mean Generated Tokens | Mean Tool Calls |
+| :--- | :---: | :---: | :---: | :---: |
+| **CHECK** | 10,621 | 11,793 | 258 | 1.70 |
+| **CHECK_TOON** | 10,337 | 11,755 | 239 | 1.63 |
+| **LIST** | 10,827 | 12,333 | 1,747 | 2.07 |
+| **LIST_TOON** | 11,846 | 12,364 | 1,751 | 2.10 |
+| **FIX** | 36,738 | 26,735 | 871 | 6.63 |
+| **FIX_TOON** | 32,466 | 26,816 | 766 | 5.97 |
 
-| **CHECK** | 10621 | 11793 | 258 |1.70 |
-|**CHECK_TOON**| 10337 | 11755| 239 | 1.63 |
-| ------------- | -------------- | -------------- | -------------- |
+As can be seen from the table, using TOON reduces both the prompt tokens presented to the LLM and the candidate tokens generated by it. It is somewhat surprising that using TOON consistently leads to fewer generated tokens, suggesting a trend where the length of the LLM's output correlates with the volume of the input context.
 
-| **LIST**|10827 | 12333 | 1747 |2.07 |
-| **LIST_TOON** | 11846 | 12364 |1751 | 2.10 |
-| ------------- | -------------- | -------------- | -------------- |
+For the simple query (**CHECK**), where the LLM is only tasked with checking if SSH is running, using TOON does not yield a significant difference. This is because the vast majority of the tokens are consumed by the system prompt and the schemas/descriptions of the available tools.
 
-| **FIX** | 36738 | 26735 | 871 |6.63 |
-| **FIX_TOON** | 32466 | 26816 |766 | 5.97 |
+For the service listing query (**LIST**), which outputs a large volume of systemd units, TOON performed slightly worse. This was due to a minor increase in the mean number of tool calls during TOON runs, which subsequently increased both prompt and generated tokens.
 
-As you can see the using toon reduces as well the tokens presented to the LLM as well as the number of tokens created by the LLM. It's a bit suprising that if toon is used always less tokens are created, but it seems to be a trend that the number of created tokens depend on the number of presented tokens.
-For the simple example where the system was just tasked to check if ssh is running using toon doesn't make any big difference, asd most of the tokens are used up by the system prompt and the description of the tools available.
-For the listing of the services, what is basically a huge list, using toon performed worse as for that query slightly more tool calls were done if toon was used. Hence the number of created tokens was increased.
-![Number of tool and ollama calls of the **FIX** task with some outliers][{{site.url}}/assets/tokens_login_fix_calls.png]
-![Number of tool and ollama calls of the **FIX_TOON** task without outliers][{{site.url}}/assets/tokens_toon_login_fix_calls.png]
-![Number of the genberated tokens for **FIX** where also the outliers are visible][{{site.url}}/assets/tokens_login_fix_cand_tokens.png]
-![Number of the genberated tokens for **FIX_TOON** with a more compact distribution][{{site.url}}/assets/tokens_login_fix_cand_tokens.png]
-For the most complex task which requires the LLM identify the stopped ssh service and start it, the more compact results from the tools make the biggest effect, not just in tne numbers presented to the LLM, but also in a more efficient tool usage due to higher number of tasks which got of the rails if no toon was used.
-Not using pure json doesn't hinder the LLM, but the efficient use of the context window seems here superior.
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; margin: 20px 0;">
+  <div style="flex: 1; min-width: 280px; text-align: center;">
+    <img src="{{ site.url }}/assets/tokens_login_fix_calls.png" alt="Number of tool and Ollama calls of the FIX task with some outliers" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+    <p style="font-size: 0.9em; color: #555; margin-top: 8px;"><em>Figure 1a: Number of tool and Ollama calls of the <strong>FIX</strong> task (with outliers)</em></p>
+  </div>
+  <div style="flex: 1; min-width: 280px; text-align: center;">
+    <img src="{{ site.url }}/assets/tokens_toon_login_fix_calls.png" alt="Number of tool and Ollama calls of the FIX_TOON task without outliers" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+    <p style="font-size: 0.9em; color: #555; margin-top: 8px;"><em>Figure 1b: Number of tool and Ollama calls of the <strong>FIX_TOON</strong> task (without outliers)</em></p>
+  </div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; margin: 20px 0;">
+  <div style="flex: 1; min-width: 280px; text-align: center;">
+    <img src="{{ site.url }}/assets/tokens_login_fix_cand_tokens.png" alt="Number of generated tokens for FIX where outliers are visible" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+    <p style="font-size: 0.9em; color: #555; margin-top: 8px;"><em>Figure 2a: Number of generated tokens for <strong>FIX</strong> (outliers visible)</em></p>
+  </div>
+  <div style="flex: 1; min-width: 280px; text-align: center;">
+    <img src="{{ site.url }}/assets/tokens_toon_login_fix_cand_tokens.png" alt="Number of generated tokens for FIX_TOON with a more compact distribution" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+    <p style="font-size: 0.9em; color: #555; margin-top: 8px;"><em>Figure 2b: Number of generated tokens for <strong>FIX_TOON</strong> (more compact distribution)</em></p>
+  </div>
+</div>
+
+For the most complex task (**FIX**), which requires the LLM to identify the stopped SSH service and start it, the compact representations provided by TOON have the most significant impact. This is reflected not only in the reduced token counts presented to the LLM, but also in more efficient tool utilization, preventing the agent from going off-course as it often did when using raw JSON.
+
+Not using pure JSON does not hinder the LLM; instead, the more efficient utilization of the context window appears to be highly superior.
 
 ## Summary
 
-Although using toon for small task doesn't seem to make a big difference as most of the tokens are spent on the system prompt and MCP server description, it performs superior if used for complex tasks as it seems to keep the LLMs more focused. Most likely this is due to the fact, that information density is higher which leads to a higher performance for complex tasks.
-
+Although using TOON for simple tasks does not seem to make a significant difference—as most tokens are spent on the system prompt and MCP server descriptions—it performs superiorly when applied to complex tasks, keeping the LLM more focused. This is likely because the increased information density reduces distracting overhead, enhancing reasoning performance on complex, multi-step operations.
 
 ## Links
 
-* https://github.com/mslacken/EvalToon
-* https://github.com/openSUSE/systemd-mcp
+* [EvalToon Repository](https://github.com/mslacken/EvalToon)
+* [systemd-mcp Repository](https://github.com/openSUSE/systemd-mcp)
 
 
 ## systemd example
