@@ -1,0 +1,60 @@
+
+---
+author: Christian Goll
+date: 2026-09-16:00:00+01:00
+layout: post
+license: CC-BY-SA-3.0
+title: Using bubblewrap with agents
+categories:
+- programming
+- agents
+- containers
+tags:
+- programming
+- agents
+---
+
+# Using bubblewrap to contain agents
+
+Using coding agents like `opencode`, `claude` or `gemini-cli` makes the use of
+LLMs for programming purposes incredibly useful.  Although this comes with a
+security cost, as you have to trust the sandboxes of these agents, and even if
+you fully trust them the underlying LLM might want to access your git tree. It
+becomes even worse as all these agents use `JavaScript` and some `npm`-like
+mechanism to pull in untrusted packages.  The proper solution for this would be
+to spin up a virtual machine and just copy the code on which the agent works
+into this virtual machine and not run the agent directly on your machine inside
+your home.  This still comes with some setup cost, so the idea here is to use
+the techniques created and used for containers to solve this.  The tool
+`bubblewrap`, which is part of flatpak, does exactly this, by running any
+binary inside a private namespace. In this private namespace we can now just
+mount the strictly necessary file paths for the agent and leave out all the
+private directories like `~/.ssh` or `~/.config`.  The project `ai-bwrap` does
+exactly this, but left out one important bit.  The private namespace still
+contains the bind-mounted current working directory with full read and write
+access. This means that the agent could still mess up your code base!  I have
+fixed this now by adding the `--overlay` option which will mount the current
+working dir via the kernel overlay fs. This means that the agent has full
+access to the current working dir but its changes live on top of the actual
+directory.  After the exit of the agent you can now decide to apply those
+changes or just discard them.
+
+An example session now looks like this:
+```
+ai-bwrap opencode --overlay --ro-bind ~/bin/
+ai-bwrap: overlay scratch: /home/chris/.local/share/ai-bwrap/run.932629
+                                   ▄     
+  █▀▀█ █▀▀█ █▀▀█ █▀▀▄ █▀▀▀ █▀▀█ █▀▀█ █▀▀█
+  █  █ █  █ █▀▀▀ █  █ █    █  █ █  █ █▀▀▀
+  ▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀
+
+  Session   Proofreading ai-bwrap blog post
+  Continue  opencode -s ses_f54d04cdcffeEIou7uTG33Yo23
+
+ai-bwrap: agent exited rc=0
+ai-bwrap: changes made in the overlay:
+    A  .git/opencode
+    M  _posts/2026-09-16-ai-bwrap
+ai-bwrap: write these changes back to /home/chris/programming/github/mslacken/mslacken.github.io? [y/N] y
+ai-bwrap: wrote changes back to /home/chris/programming/github/mslacken/mslacken.github.io
+```
