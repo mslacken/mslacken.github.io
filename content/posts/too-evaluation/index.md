@@ -95,22 +95,22 @@ For the service listing query (**LIST**), which outputs a large volume of system
 
 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; margin: 20px 0;">
   <div style="flex: 1; min-width: 280px; text-align: center;">
-    <img src="{{ site.url }}/assets/tokens_login_fix_calls.png" alt="Number of tool and Ollama calls of the FIX task with some outliers" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+    <img src="./tokens_login_fix_calls.png" alt="Number of tool and Ollama calls of the FIX task with some outliers" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
     <p style="font-size: 0.9em; color: #555; margin-top: 8px;"><em>Figure 1a: Number of tool and Ollama calls of the <strong>FIX</strong> task (with outliers)</em></p>
   </div>
   <div style="flex: 1; min-width: 280px; text-align: center;">
-    <img src="{{ site.url }}/assets/tokens_toon_login_fix_calls.png" alt="Number of tool and Ollama calls of the FIX_TOON task without outliers" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+    <img src="./tokens_toon_login_fix_calls.png" alt="Number of tool and Ollama calls of the FIX_TOON task without outliers" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
     <p style="font-size: 0.9em; color: #555; margin-top: 8px;"><em>Figure 1b: Number of tool and Ollama calls of the <strong>FIX_TOON</strong> task (without outliers)</em></p>
   </div>
 </div>
 
 <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; margin: 20px 0;">
   <div style="flex: 1; min-width: 280px; text-align: center;">
-    <img src="{{ site.url }}/assets/tokens_login_fix_cand_tokens.png" alt="Number of generated tokens for FIX where outliers are visible" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+    <img src="./tokens_login_fix_cand_tokens.png" alt="Number of generated tokens for FIX where outliers are visible" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
     <p style="font-size: 0.9em; color: #555; margin-top: 8px;"><em>Figure 2a: Number of generated tokens for <strong>FIX</strong> (outliers visible)</em></p>
   </div>
   <div style="flex: 1; min-width: 280px; text-align: center;">
-    <img src="{{ site.url }}/assets/tokens_toon_login_fix_cand_tokens.png" alt="Number of generated tokens for FIX_TOON with a more compact distribution" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
+    <img src="./tokens_toon_login_fix_cand_tokens.png" alt="Number of generated tokens for FIX_TOON with a more compact distribution" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;" />
     <p style="font-size: 0.9em; color: #555; margin-top: 8px;"><em>Figure 2b: Number of generated tokens for <strong>FIX_TOON</strong> (more compact distribution)</em></p>
   </div>
 </div>

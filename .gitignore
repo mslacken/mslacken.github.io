@@ -3,3 +3,9 @@ _site
 .jekyll-cache
 .jekyll-metadata
 vendor
+
+# Hugo exclusions
+resources
+public
+.hugo_build.lock
+
